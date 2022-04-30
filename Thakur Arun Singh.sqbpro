@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/Users/Welcome/Documents/PGDSBA/SQL Projects/New Orders.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="150"/><column_width id="3" width="1901"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,7:mainADDRESS"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="ADDRESS" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="147"/><column index="2" value="300"/><column index="3" value="300"/><column index="4" value="170"/><column index="5" value="147"/><column index="6" value="105"/><column index="7" value="110"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="PRODUCT" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="148"/><column index="2" value="300"/><column index="3" value="255"/><column index="4" value="186"/><column index="5" value="300"/><column index="6" value="61"/><column index="7" value="85"/><column index="8" value="91"/><column index="9" value="97"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="Sqlite">
+
+-- 1. Write a query to Display the product details (product_class_code, product_id, product_desc,
+--  product_price,) as per the following criteria and sort them in descending order of category:
+--  a. If the category is 2050, increase the price by 2000
+--  If the category is 2051, increase the price by 500
+--. If the category is 2052, increase the price by 600.
+
+
+
+SELECT P.PRODUCT_CLASS_CODE, P.PRODUCT_ID, P.PRODUCT_DESC,
+CASE P.PRODUCT_CLASS_CODE
+WHEN 2050 THEN P.product_price + 2000
+WHEN 2051 THEN P.product_price + 500
+WHEN 2052 THEN P.product_price + 600
+ELSE P.PRODUCT_PRICE
+END PRODUCT_PRICE
+FROM PRODUCT P
+INNER JOIN PRODUCT_CLASS PC
+ON P.PRODUCT_CLASS_CODE = PC.PRODUCT_CLASS_CODE
+ORDER BY P.PRODUCT_CLASS_CODE desc;
+
+
+------------------------------------------------------------------------------------------
+
+
+-- 2.Write a query to display (product_class_desc, product_id, product_desc,
+--product_quantity_avail ) and Show inventory status of products as below as per their
+--available quantity:
+--a. For Electronics and Computer categories, if available quantity is &lt;= 10, show 'Low
+--stock', 11 &lt;= qty &lt;= 30, show 'In stock', &gt;= 31, show 'Enough stock'
+--b. For Stationery and Clothes categories, if qty &lt;= 20, show 'Low stock', 21 &lt;= qty &lt;=
+--80, show 'In stock', &gt;= 81, show 'Enough stock'
+--c. Rest of the categories, if qty &lt;= 15 – 'Low Stock', 16 &lt;= qty &lt;= 50 – 'In Stock', &gt;= 51 –
+--'Enough stock'
+--For all categories, if available quantity is 0, show 'Out of
+--stock'.
+
+
+
+SELECT PC.PRODUCT_CLASS_DESC, P.PRODUCT_ID, P.PRODUCT_DESC, P.PRODUCT_QUANTITY_AVAIL,
+CASE
+WHEN P.PRODUCT_CLASS_CODE in (2050,2053) THEN
+CASE
+WHEN
+P.PRODUCT_QUANTITY_AVAIL =0 THEN 'Out of stock'
+WHEN
+P.PRODUCT_QUANTITY_AVAIL &lt;=10 THEN 'Low stock'
+WHEN
+(P.PRODUCT_QUANTITY_AVAIL &gt;=11 and P.PRODUCT_QUANTITY_AVAIL &lt;=30) THEN 'In stock'
+WHEN
+P.PRODUCT_QUANTITY_AVAIL &gt;=31 THEN 'Enough stock'
+END
+WHEN P.PRODUCT_CLASS_CODE in (2052,2056) THEN
+CASE
+WHEN
+P.PRODUCT_QUANTITY_AVAIL =0 THEN 'Out of stock'
+WHEN
+P.PRODUCT_QUANTITY_AVAIL &lt;=20 THEN 'Low stock'
+WHEN
+(P.PRODUCT_QUANTITY_AVAIL &gt;=21 and P.PRODUCT_QUANTITY_AVAIL &lt;=80) THEN 'In stock'
+WHEN
+P.PRODUCT_QUANTITY_AVAIL &gt;=81 THEN 'Enough stock'
+END
+ELSE 
+CASE
+WHEN
+P.PRODUCT_QUANTITY_AVAIL =0 THEN 'Out of stock'
+WHEN
+P.PRODUCT_QUANTITY_AVAIL &lt;=15 THEN 'Low stock'
+WHEN
+(P.PRODUCT_QUANTITY_AVAIL &gt;=16 and P.PRODUCT_QUANTITY_AVAIL &lt;=50) THEN 'In stock'
+WHEN
+P.PRODUCT_QUANTITY_AVAIL &gt;=51 THEN 'Enough stock'
+END
+END INVENTORY_STATUS
+FROM PRODUCT P 
+INNER JOIN PRODUCT_CLASS PC ON P.PRODUCT_CLASS_CODE =
+PC.PRODUCT_CLASS_CODE
+ORDER BY P.PRODUCT_CLASS_CODE desc;
+
+
+--------------------------------------------------------------------------------------------------
+
+--3.Write a query to Show the count of cities in all countries other than USA &amp; MALAYSIA, with more
+--than 1 city, in the descending order of CITIES. (2 rows) [NOTE: ADDRESS TABLE, Do not use
+--Distinct]
+
+select count(*) as &quot;Count of Cities&quot;,city,Country from ADDRESS where country not in ('USA','MALAYSIA')
+group by city order by count(city&gt;1) DESC;
+
+
+
+---------------------------------------------------------------------------------------------------
+--4. Write a query to display the customer_id,customer full name ,city,pincode,and order details (
+--order id, product class desc, product desc, subtotal(product_quantity * product_price)) 
+--for orders shipped to cities whose pin codes do not have any 0s in them. Sort the output on customer name and subtotal. 
+--(52 ROWS) [NOTE: TABLE TO BE USED - online_customer, address, order_header, order_items, product, product_class]
+
+SELECT OC.CUSTOMER_ID, (OC.CUSTOMER_FNAME ||' '|| OC.CUSTOMER_LNAME) AS
+CUSTOMER_FULL_NAME, A.CITY, A.PINCODE, O.ORDER_ID,
+ O.ORDER_DATE, PC.PRODUCT_CLASS_DESC, P.PRODUCT_DESC,
+(OI.PRODUCT_QUANTITY*P.PRODUCT_PRICE) AS SUBTOTAL
+FROM ONLINE_CUSTOMER OC
+INNER JOIN ADDRESS A ON OC.ADDRESS_ID = A.ADDRESS_ID
+LEFT JOIN
+(
+SELECT CUSTOMER_ID, MAX(ORDER_ID) AS ORDER_ID,
+ORDER_DATE
+FROM ORDER_HEADER
+GROUP BY CUSTOMER_ID
+) O ON OC.CUSTOMER_ID = O.CUSTOMER_ID
+LEFT JOIN
+(
+SELECT ORDER_ID,
+SUM(PRODUCT_QUANTITY) AS PRODUCT_QUANTITY, PRODUCT_ID
+FROM ORDER_ITEMS
+GROUP BY ORDER_ID
+) OI ON O.ORDER_ID = OI.ORDER_ID
+LEFT JOIN PRODUCT P ON OI.PRODUCT_ID = P.PRODUCT_ID
+LEFT JOIN PRODUCT_CLASS PC ON P.PRODUCT_CLASS_CODE =
+PC.PRODUCT_CLASS_CODE
+WHERE CAST(A.PINCODE AS INTEGER) &gt; 0
+ORDER BY OC.CUSTOMER_FNAME, O.ORDER_DATE, SUBTOTAL
+
+
+--5.Write a Query to display product id,product
+--description,totalquantity(sum(product quantity) for an item which has
+--been bought maximum no. of times along with product id 201. 
+
+
+SELECT OI.PRODUCT_ID, P.PRODUCT_DESC, SUM(OI.PRODUCT_QUANTITY) AS TOTAL_QUANTITY
+FROM ORDER_ITEMS OI
+LEFT JOIN PRODUCT P ON OI.PRODUCT_ID = P.PRODUCT_ID
+LEFT JOIN PRODUCT_CLASS PC ON P.PRODUCT_CLASS_CODE =
+PC.PRODUCT_CLASS_CODE
+WHERE OI.PRODUCT_ID in
+(
+SELECT MAX(PRODUCT_ID) as PRODUCT_ID
+FROM ORDER_ITEMS B
+WHERE ORDER_ID IN
+(
+SELECT DISTINCT
+ORDER_ID
+FROM
+ORDER_ITEMS A
+WHERE
+PRODUCT_ID = 201
+)
+GROUP BY B.ORDER_ID
+ORDER BY COUNT(B.PRODUCT_ID) DESC
+)
+
+------------------------------------------------------------------------------------------
+
+
+
+--6. Write a query to display the customer_id,customer name, email and order details (order id,
+--product desc,product qty, subtotal(product_quantity * product_price)) for all customers
+--even if they have not ordered any item.(225 ROWS)
+--[NOTE: TABLE TO BE USED - online_customer, order_header, order_items, product]
+
+
+SELECT OC.CUSTOMER_ID, (OC.CUSTOMER_FNAME ||' '|| OC.CUSTOMER_LNAME) AS
+CUSTOMER_FULL_NAME, OC.CUSTOMER_EMAIL, O.ORDER_ID,
+P.PRODUCT_DESC, OI.PRODUCT_QUANTITY,
+(OI.PRODUCT_QUANTITY*P.PRODUCT_PRICE) AS SUBTOTAL
+FROM ONLINE_CUSTOMER OC
+INNER JOIN ADDRESS A ON OC.ADDRESS_ID = A.ADDRESS_ID
+LEFT JOIN ORDER_HEADER O ON OC.CUSTOMER_ID =
+O.CUSTOMER_ID
+LEFT JOIN ORDER_ITEMS OI ON O.ORDER_ID =
+OI.ORDER_ID
+LEFT JOIN PRODUCT P ON OI.PRODUCT_ID =
+P.PRODUCT_ID
+LEFT JOIN PRODUCT_CLASS PC ON
+P.PRODUCT_CLASS_CODE = PC.PRODUCT_CLASS_CODE
+
+
+</sql><current_tab id="0"/></tab_sql></sqlb_project>
